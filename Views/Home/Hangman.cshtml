@@ -1,0 +1,124 @@
+﻿@using task6x.Models;
+@using Microsoft.AspNetCore.Mvc.Rendering;
+@{
+    ViewBag.Title = "Hangman";
+    string currentUser = ViewBag.CurrentUser;
+}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/5.0.13/signalr.min.js"></script>
+
+
+<div id="wordSection">
+    @if (@currentUser == "admin")
+    {
+        <h5>Enter the word and hint:</h5>
+        <input required id="word" class="form-w" placeholder="word"/>
+        <input required id="hint" class="form-w" placeholder="hint"/>
+        <button class="btn btn-pink" id="sendWordButton">Send word</button>
+    }
+    else
+    { <h5>Please, wait while admin enters the word.</h5> }
+</div>
+
+<div class="row">
+    <div  class="col-md-4">
+        <div id="displayWord" style="display: none;"></div>
+
+        <div id="hangman" style="display: none;">
+            <img id="hangmanPic" src="~/hangman/0.PNG" />
+        </div>
+    </div>
+
+    <div class="col-md-8" id="guessLetter" style="display: none;">
+        @if (@currentUser != "admin")
+        {
+            <h5>Guess the letter:</h5>
+            <ul id="keyboard">
+                <li class="letter">A</li>
+                <li class="letter">B</li>
+                <li class="letter">C</li>
+                <li class="letter">D</li>
+                <li class="letter">E</li>
+                <li class="letter">F</li>
+                <li class="letter">G</li>
+                <li class="letter">H</li>
+                <li class="letter">I</li>
+                <li class="letter">J</li>
+                <li class="letter">K</li>
+                <li class="letter">L</li>
+                <li class="letter">M</li>
+                <li class="letter">N</li>
+                <li class="letter">O</li>
+                <li class="letter">P</li>
+                <li class="letter">Q</li>
+                <li class="letter">R</li>
+                <li class="letter">S</li>
+                <li class="letter">T</li>
+                <li class="letter">U</li>
+                <li class="letter">V</li>
+                <li class="letter">W</li>
+                <li class="letter">X</li>
+                <li class="letter">Y</li>
+                <li class="letter">Z</li>
+            </ul>
+            <button class="btn btn-pink" id="watchHintButton">Watch a hint</button>
+            <div id="hint" style="display: none;"></div>
+        }
+    </div>
+</div>
+<div id="result"></div>
+
+<script>
+    var connection = new signalR.HubConnectionBuilder().withUrl("/Hangman").build();
+
+    $("#sendWordButton").click(function () {
+        var word = $("#word").val();
+        var hint = $("#hint").val();
+        connection.invoke("SendWord", word, hint);
+        $("#word").val("");
+        $("#hint").val("");
+    });
+
+    connection.on("ReceiveWord", function (displayWord) {
+        $("#displayWord").show().text(displayWord);
+        $("#wordSection").hide();
+        $("#guessLetter").show();
+        $("#hangman").show();
+    });
+    //------------------------------------------
+
+    $('#keyboard li').click(function () {
+        var letter = $(this).text();
+        $(this).attr('id', 'pressed');
+        connection.invoke("SendLetter", letter);
+    });
+
+    connection.on("ReceiveLetter", function (isOver, isRight, displayWord, tries) {
+        $("#displayWord").text(displayWord);
+        $("#pressed").attr('id', isRight ? 'right' : 'wrong');
+        if (isOver) {
+            $("#guessLetter").hide();
+            $("#result").text(isRight ? "Congratulation, you won!" : "Sorry, you lost! Better luck next time.");
+        }
+        if (!isRight) {
+            $('#hangmanPic').attr('src', `/hangman/${tries}.PNG`);
+        }
+    });
+
+    $("#watchHintButton").click(function () {
+        connection.invoke("WatchHint");
+    });
+
+    connection.on("ReceiveHint", function (hint) {
+        $("#hint").show().text(hint);
+    });
+
+    //-------------------------------------------
+
+    connection.start().then(function () {
+        console.log("Connected!");
+    }).catch(function (err) {
+        console.error(err.toString());
+    });
+</script>

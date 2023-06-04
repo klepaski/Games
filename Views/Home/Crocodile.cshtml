@@ -1,0 +1,155 @@
+﻿@using task6x.Models;
+@using Microsoft.AspNetCore.Mvc.Rendering;
+@using task6x.Hubs;
+@{
+    ViewData["Title"] = "Crocodile";
+    string currentUser = ViewBag.CurrentUser;
+}
+
+<div class="row game">
+    <div class="col-md-7">
+        <canvas id='drawingpad' width='400' height='300'></canvas>
+        @if (currentUser == "admin")
+        {
+            <ul id="colors">
+                <li style="background-color: darkred;">darkred</li>
+                <li style="background-color: red;">red</li>
+                <li style="background-color: orangered;">orangered</li>
+                <li style="background-color: orange;">orange</li>
+                <li style="background-color: yellow;">yellow</li>
+                <li style="background-color: lawngreen;">lawngreen</li>
+                <li style="background-color: green;">green</li>
+                <li style="background-color: deepskyblue;">deepskyblue</li>
+                <li style="background-color: dodgerblue;">dodgerblue</li>
+                <li style="background-color: blue;">blue</li>
+                <li style="background-color: darkblue;">darkblue</li>
+                <li style="background-color: darkviolet;">darkviolet</li>
+                <li style="background-color: blueviolet;">blueviolet</li>
+                <li style="background-color: deeppink;">deeppink</li>
+                <li style="background-color: mediumvioletred;">mediumvioletred</li>
+                <li style="background-color: darkviolet;">darkviolet</li>
+            </ul>
+            <div id="answerSection">
+                <input required id="answer" class="col-md-9" placeholder="What are you drawing?" />
+                <button class="btn btn-pink col-md-3" id="sendAnswerButton">Set answer</button>
+            </div>
+        }
+    </div>
+    <div class="chat col-md-5">
+        <h5>Chat Messages</h5>
+        <div id="messages"></div>
+        <div class="row">
+            <input required id="message" class="col-md-9" placeholder="suggestion" />
+            <button class="btn btn-pink col-md-3" id="sendMessageButton">Send</button>
+        </div>
+    </div>
+</div>
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/5.0.13/signalr.min.js"></script>
+
+
+<script>
+    var connection = new signalR.HubConnectionBuilder().withUrl("/Crocodile").build();
+
+    $("#sendAnswerButton").click(function () {
+        var answer = $("#answer").val();
+        connection.invoke("SendAnswer", answer);
+        $("#answerSection").html("<h4>"+answer+"</h4>");
+    });
+
+    connection.start().then(function () {
+        console.log("Connected!");
+        if ("@currentUser" == "admin")
+        {
+            canvas.addEventListener("mousedown", mousedown, false);
+            canvas.addEventListener("mousemove", mousemove, false);
+            canvas.addEventListener("mouseup", mouseup, false);
+        }
+    }).catch(function (err) {console.error(err.toString());});
+
+
+    var drawGame = { isDrawing: false, startX: 0, startY: 0, };
+    var data = { startX: 0, startY: 0, endX: 0, endY: 0 };
+    var canvas = document.getElementById('drawingpad');
+    var ctx = canvas.getContext('2d');
+    var _currentColor = "#444";
+
+    $('#colors li').click(function () {
+        _currentColor = $(this).text();
+        console.log(_currentColor)
+        connection.invoke("SendColor", _currentColor);
+    });
+
+    connection.on("addLine", function (data, color) {
+        drawLine(ctx, data.startX, data.startY, data.endX, data.endY, 1, color);
+    })
+
+    function drawLine(ctx, x1, y1, x2, y2, thickness, color) {
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.lineWidth = thickness;
+        ctx.strokeStyle = color;
+        ctx.stroke();
+    }
+
+    function mousedown(e) {
+        var mouseX = e.layerX || 0;
+        var mouseY = e.layerY || 0;
+        drawGame.startX = mouseX;
+        drawGame.startY = mouseY;
+        drawGame.isDrawing = true;
+    };
+
+    function mousemove(e) {
+        if (drawGame.isDrawing) {
+            var mouseX = e.layerX || 0;
+            var mouseY = e.layerY || 0;
+            if (!(mouseX == drawGame.startX &&
+                mouseY == drawGame.startY)) {
+                drawLine(ctx, drawGame.startX,
+                    drawGame.startY, mouseX, mouseY, 1, _currentColor);
+                data.startX = drawGame.startX;
+                data.startY = drawGame.startY;
+                data.endX = mouseX;
+                data.endY = mouseY;
+                connection.invoke("DrawLine", data); //
+                drawGame.startX = mouseX;
+                drawGame.startY = mouseY;
+            }
+        }
+    };
+
+    function mouseup(e) {
+        drawGame.isDrawing = false;
+    }
+
+    //------- Ч А Т ----------
+
+    $("#sendMessageButton").click(function () {
+        var message = $("#message").val();
+        connection.invoke("SendMessage", message, "@currentUser");
+        $("#message").val("").focus();
+    });
+
+    connection.on("ReceiveMessage", function (isAnswer, message, userName) {
+        if (userName == "admin") {
+            message = isAnswer ? "******" : message;
+            var encodedMsg = "<div class='msg'><img src='/crocodile.png'><p>" + message + "</p></div>"; // (isAnswer ? "******" : message)
+        }
+        else {
+            var encodedMsg = "<div class='msg darker'><p class='right'>" + message + "</p></div>";
+        }
+        $("#messages").append(encodedMsg);
+        $("#messages").animate({ scrollTop: $("#messages").height() }, 'fast');
+
+        if (isAnswer && userName != "admin") {
+            console.log("answer was guessed by");
+            console.log(userName);
+            $("#messages").html("<h4>User <b>" + userName + "</b> guessed the word \"" + message.toUpperCase() + "\"!</h4>");
+        }
+    })
+
+</script>

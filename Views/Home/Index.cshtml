@@ -1,0 +1,20 @@
+﻿@{
+    ViewData["Title"] = "Login";
+}
+
+<div class="row">
+    <div class="col-md-4 offset-md-4 text-center">
+        <section>
+            <form asp-controller="Home" asp-action="Login" method="post">
+                <h2>Enter your name!</h2>
+                <hr />
+                <div class="form-floating mb-3">
+                    <input required name="userName" type="text" placeholder="Your name" />
+                </div>
+                <div>
+                    <button class="btn btn-pink" type="submit">Login</button>
+                </div>
+            </form>
+        </section>
+    </div>
+</div>
