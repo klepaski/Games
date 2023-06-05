@@ -8,66 +8,91 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/5.0.13/signalr.min.js"></script>
 
+<div class="row preGame">
+    <div class="welcomeGame">
+        <h3 id="welcomeWords">Welcome to the 'Hangman' game!</h3>
+        <hr />
+        <h6><b>Rules are pretty simple:</b></h6>
+        <h6>  ♥ Admin chooses any word</h6>
+        <h6>  ♥ Admin enters a hint</h6>
+        <h6>  ♥ Player try to guess the word's letters</h6>
+        <h6>  ♥ Player can take a hint</h6>
+        <h6>  ♥ Player wins after guessing all the letters</h6>
+        <h6>  ♥ Player loses after entering the wrong letter 6 times</h6>
+        <hr />
+        <img id="welcomePic" src="~/img/hangman/0.PNG" />
 
-<div id="wordSection">
-    @if (@currentUser == "admin")
-    {
-        <h5>Enter the word and hint:</h5>
-        <input required id="word" class="form-w" placeholder="word"/>
-        <input required id="hint" class="form-w" placeholder="hint"/>
-        <button class="btn btn-pink" id="sendWordButton">Send word</button>
-    }
-    else
-    { <h5>Please, wait while admin enters the word.</h5> }
-</div>
-
-<div class="row">
-    <div  class="col-md-4">
-        <div id="displayWord" style="display: none;"></div>
-
-        <div id="hangman" style="display: none;">
-            <img id="hangmanPic" src="~/hangman/0.PNG" />
-        </div>
     </div>
-
-    <div class="col-md-8" id="guessLetter" style="display: none;">
-        @if (@currentUser != "admin")
+    <div class="preGameChoose">
+        @if (@currentUser == "admin")
         {
-            <h5>Guess the letter:</h5>
-            <ul id="keyboard">
-                <li class="letter">A</li>
-                <li class="letter">B</li>
-                <li class="letter">C</li>
-                <li class="letter">D</li>
-                <li class="letter">E</li>
-                <li class="letter">F</li>
-                <li class="letter">G</li>
-                <li class="letter">H</li>
-                <li class="letter">I</li>
-                <li class="letter">J</li>
-                <li class="letter">K</li>
-                <li class="letter">L</li>
-                <li class="letter">M</li>
-                <li class="letter">N</li>
-                <li class="letter">O</li>
-                <li class="letter">P</li>
-                <li class="letter">Q</li>
-                <li class="letter">R</li>
-                <li class="letter">S</li>
-                <li class="letter">T</li>
-                <li class="letter">U</li>
-                <li class="letter">V</li>
-                <li class="letter">W</li>
-                <li class="letter">X</li>
-                <li class="letter">Y</li>
-                <li class="letter">Z</li>
-            </ul>
-            <button class="btn btn-pink" id="watchHintButton">Watch a hint</button>
-            <div id="hint" style="display: none;"></div>
+            <h3 id="welcomeWords">Enter the word and hint:</h3>
+            <input required id="word" class="form-w" placeholder="word" />
+            <input required id="hint" class="form-w" placeholder="hint" /><br/>
+            <button class="btn btn-pink" id="sendWordButton">Start</button>
+        }
+        else
+        {
+            <h3 id="welcomeWords">Please, wait while admin enters the word.</h3>
+            <h5>That will be fun!</h5>
         }
     </div>
 </div>
-<div id="result"></div>
+
+
+<div class="row game" style="display: none;">
+    <div  class="col-md-4">
+        <div id="displayWord"></div>
+
+        <div id="hangman"><img id="hangmanPic" src="~/img/hangman/0.PNG" /></div>
+    </div>
+
+    <div class="col-md-8" id="gameProcess">
+        <div id="guessLetter">
+            @if (@currentUser != "admin")
+            {
+                <h5>Guess the letter:</h5>
+                <ul id="keyboard">
+                    <li class="letter">A</li>
+                    <li class="letter">B</li>
+                    <li class="letter">C</li>
+                    <li class="letter">D</li>
+                    <li class="letter">E</li>
+                    <li class="letter">F</li>
+                    <li class="letter">G</li>
+                    <li class="letter">H</li>
+                    <li class="letter">I</li>
+                    <li class="letter">J</li>
+                    <li class="letter">K</li>
+                    <li class="letter">L</li>
+                    <li class="letter">M</li>
+                    <li class="letter">N</li>
+                    <li class="letter">O</li>
+                    <li class="letter">P</li>
+                    <li class="letter">Q</li>
+                    <li class="letter">R</li>
+                    <li class="letter">S</li>
+                    <li class="letter">T</li>
+                    <li class="letter">U</li>
+                    <li class="letter">V</li>
+                    <li class="letter">W</li>
+                    <li class="letter">X</li>
+                    <li class="letter">Y</li>
+                    <li class="letter">Z</li>
+                </ul>
+                <button class="btn btn-pink" id="watchHintButton">Watch a hint</button>
+                <div id="hintDisplay" style="display: none;"></div>
+            }
+            else
+            {
+                <h3 id="welcomeWords">Another player's tries:</h3>
+                <ul id="adminDisplay"></ul>            
+            }
+        </div>
+        <h3 id="result"></h3>
+    </div>
+</div>
+
 
 <script>
     var connection = new signalR.HubConnectionBuilder().withUrl("/Hangman").build();
@@ -81,28 +106,28 @@
     });
 
     connection.on("ReceiveWord", function (displayWord) {
-        $("#displayWord").show().text(displayWord);
-        $("#wordSection").hide();
-        $("#guessLetter").show();
-        $("#hangman").show();
+        $(".preGame").hide();
+        $(".game").show();
+        $("#displayWord").text(displayWord);
     });
     //------------------------------------------
 
     $('#keyboard li').click(function () {
         var letter = $(this).text();
         $(this).attr('id', 'pressed');
-        connection.invoke("SendLetter", letter);
+        connection.invoke("SendLetter", letter, "@currentUser");
     });
 
-    connection.on("ReceiveLetter", function (isOver, isRight, displayWord, tries) {
+    connection.on("ReceiveLetter", function (isOver, isRight, displayWord, tries, letter, userName) {
         $("#displayWord").text(displayWord);
         $("#pressed").attr('id', isRight ? 'right' : 'wrong');
+        $("#adminDisplay").append("<li>" + userName + " chose letter " + letter + ". " + tries + " tries spent.</li>")
         if (isOver) {
             $("#guessLetter").hide();
-            $("#result").text(isRight ? "Congratulation, you won!" : "Sorry, you lost! Better luck next time.");
+            $("#result").text(isRight ? `${userName} won. Congratulations!` : `${userName} lost. Better luck next time!`);
         }
         if (!isRight) {
-            $('#hangmanPic').attr('src', `/hangman/${tries}.PNG`);
+            $('#hangmanPic').attr('src', `/img/hangman/${tries}.PNG`);
         }
     });
 
@@ -111,7 +136,7 @@
     });
 
     connection.on("ReceiveHint", function (hint) {
-        $("#hint").show().text(hint);
+        $("#hintDisplay").show().text(hint);
     });
 
     //-------------------------------------------

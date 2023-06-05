@@ -1,5 +1,5 @@
 ﻿@using Microsoft.AspNetCore.Http;
-@*@inject IHttpContextAccessor Accessor*@
+@inject IHttpContextAccessor Accessor
 
 <!DOCTYPE html>
 <html lang="en">
@@ -38,6 +38,14 @@
                             </li>
                         }*@
                     </ul>
+                    @if (Accessor.HttpContext.Session.GetString("userName") != null)
+                        {
+                    <form asp-controller="Home" method="post">
+                        <button class="btn btn-pink" asp-action="Crocodile" type="submit">Crocodile</button>
+                        <button class="btn btn-pink" asp-action="Hangman" type="submit">Hangman</button>
+                        <button class="btn btn-pink" asp-action="Logout" type="submit">Logout</button>
+                    </form>
+                        }
                 </div>
             </div>
         </nav>

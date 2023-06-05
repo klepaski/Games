@@ -1,17 +1,66 @@
 ﻿@using task6x.Models;
 @using Microsoft.AspNetCore.Mvc.Rendering;
 @using task6x.Hubs;
+@using task6x.Services;
 @{
     ViewData["Title"] = "Crocodile";
     string currentUser = ViewBag.CurrentUser;
 }
+<div class="row preGame">
+    <div class="welcomeGame">
+        <h3 id="welcomeWords">Welcome to the 'Crocodile' game!</h3>
+        <hr/>
+        <h6><b>Rules are pretty simple:</b></h6>
+        <h6>  ♥ Crocodile choose 1+ categories to draw</h6>
+        <h6>  ♥ Crocodile choose the word to draw</h6>
+        <h6>  ♥ Crocodile is drawing</h6>
+        <h6>  ♥ Other players send their guesses to the chat</h6>
+        <h6>  ♥ Crocodile can send a hint in chat</h6>
+        <h6>  ♥ Crocodile can't write answer! (it will be censored)</h6>
+        <h6>  ♥ The game continues untill a player send the correct answer to the chat</h6>
+        <hr/>
+        <img id="welcomePic" src="~/img/crocodile/welcome.PNG" />
 
-<div class="row game">
+    </div>
+    <div class="preGameChoose">
+        @if (currentUser == "admin")
+        {
+            <div id="categorySection">
+                <h3 id="welcomeWords">Please, choose the categories </h3>
+                <p id="categories">
+                    @foreach (var c in (Category[])Enum.GetValues(typeof(Category)))
+                    {
+                        <input type="checkbox" value="@c" /> @c
+                    }
+                </p>
+                <button class="btn btn-pink col-md-3" id="sendCategoriesButton">Choose categories</button>
+            </div>
+
+            <div id="proposeAnswerSection" style="display: none;">
+                <h3 id="welcomeWords">Please, choose the word </h3>
+                <h3 id="proposedAnswer"></h3>
+                <button class="btn btn-pink col-md-3" id="setAnswerButton">Choose word</button>
+                <button class="btn btn-pink col-md-3" id="changeAnswerButton">Try another</button>
+            </div>
+        }
+        else
+        {
+            <h3 id="welcomeWords">Please, wait while admin choose word to draw.</h3>
+            <h5>That will be fun!</h5>
+        }
+    </div>
+    
+</div>
+
+
+
+<div class="row game" style="display: none;">
     <div class="col-md-7">
         <canvas id='drawingpad' width='400' height='300'></canvas>
         @if (currentUser == "admin")
         {
             <ul id="colors">
+                <li style="background-color: black;">black</li>
                 <li style="background-color: darkred;">darkred</li>
                 <li style="background-color: red;">red</li>
                 <li style="background-color: orangered;">orangered</li>
@@ -22,23 +71,19 @@
                 <li style="background-color: deepskyblue;">deepskyblue</li>
                 <li style="background-color: dodgerblue;">dodgerblue</li>
                 <li style="background-color: blue;">blue</li>
-                <li style="background-color: darkblue;">darkblue</li>
                 <li style="background-color: darkviolet;">darkviolet</li>
                 <li style="background-color: blueviolet;">blueviolet</li>
                 <li style="background-color: deeppink;">deeppink</li>
                 <li style="background-color: mediumvioletred;">mediumvioletred</li>
                 <li style="background-color: darkviolet;">darkviolet</li>
             </ul>
-            <div id="answerSection">
-                <input required id="answer" class="col-md-9" placeholder="What are you drawing?" />
-                <button class="btn btn-pink col-md-3" id="sendAnswerButton">Set answer</button>
-            </div>
+            <div><h3 id="answer"></h3></div>
         }
     </div>
     <div class="chat col-md-5">
         <h5>Chat Messages</h5>
         <div id="messages"></div>
-        <div class="row">
+        <div class="row" id="sendMessage">
             <input required id="message" class="col-md-9" placeholder="suggestion" />
             <button class="btn btn-pink col-md-3" id="sendMessageButton">Send</button>
         </div>
@@ -53,12 +98,6 @@
 <script>
     var connection = new signalR.HubConnectionBuilder().withUrl("/Crocodile").build();
 
-    $("#sendAnswerButton").click(function () {
-        var answer = $("#answer").val();
-        connection.invoke("SendAnswer", answer);
-        $("#answerSection").html("<h4>"+answer+"</h4>");
-    });
-
     connection.start().then(function () {
         console.log("Connected!");
         if ("@currentUser" == "admin")
@@ -69,6 +108,7 @@
         }
     }).catch(function (err) {console.error(err.toString());});
 
+    // Drawing
 
     var drawGame = { isDrawing: false, startX: 0, startY: 0, };
     var data = { startX: 0, startY: 0, endX: 0, endY: 0 };
@@ -126,7 +166,7 @@
         drawGame.isDrawing = false;
     }
 
-    //------- Ч А Т ----------
+    // Chat
 
     $("#sendMessageButton").click(function () {
         var message = $("#message").val();
@@ -137,19 +177,48 @@
     connection.on("ReceiveMessage", function (isAnswer, message, userName) {
         if (userName == "admin") {
             message = isAnswer ? "******" : message;
-            var encodedMsg = "<div class='msg'><img src='/crocodile.png'><p>" + message + "</p></div>"; // (isAnswer ? "******" : message)
+            var encodedMsg = "<div class='msg'><img src='/img/crocodile/crocodile.png'><p>" + message + "</p></div>"; // (isAnswer ? "******" : message)
         }
         else {
-            var encodedMsg = "<div class='msg darker'><p class='right'>" + message + "</p></div>";
+            var encodedMsg = "<div class='msg darker'><p class='right'><b>" + userName + ":</b> " + message + "</p></div>";
         }
         $("#messages").append(encodedMsg);
         $("#messages").animate({ scrollTop: $("#messages").height() }, 'fast');
 
         if (isAnswer && userName != "admin") {
-            console.log("answer was guessed by");
-            console.log(userName);
             $("#messages").html("<h4>User <b>" + userName + "</b> guessed the word \"" + message.toUpperCase() + "\"!</h4>");
+            $("#sendMessage").hide();
         }
     })
 
+    // Chose category and word
+
+    $("#sendCategoriesButton").click(function () {
+        var checked = [];
+        $('#categories input:checkbox:checked').each(function () {
+            console.log($(this).val());
+            checked.push($(this).val());
+        });
+        connection.invoke("SendCategories", checked);
+        $('#categorySection').hide();
+    });
+
+    connection.on("chooseAnswer", function (answer) {
+        $('#proposeAnswerSection').show();
+        $('#proposedAnswer').text(answer);
+    });
+
+    $("#changeAnswerButton").click(function () {
+        connection.invoke("ChangeAnswer");
+    });
+
+    $("#setAnswerButton").click(function () {
+        connection.invoke("SetAnswer");
+    });
+
+    connection.on("setAnswer", function (answer) {
+        $('.preGame').hide();
+        $('.game').show();
+        $('#answer').text(answer);
+    });
 </script>

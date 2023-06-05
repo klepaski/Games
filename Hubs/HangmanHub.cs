@@ -21,7 +21,7 @@ namespace task6x.Hubs
             await Clients.All.SendAsync("ReceiveWord", _displayWord);
         }
 
-        public async Task SendLetter(string letter)
+        public async Task SendLetter(string letter, string username)
         {
             bool isRight = false;
             bool isOver = false;
@@ -36,7 +36,7 @@ namespace task6x.Hubs
             if (!isRight) tries++;
             if (tries == 6) _displayWord = _word;
             if (_displayWord == _word) isOver = true;
-            await Clients.All.SendAsync("ReceiveLetter", isOver, isRight, _displayWord, tries);
+            await Clients.All.SendAsync("ReceiveLetter", isOver, isRight, _displayWord, tries, letter, username);
         }
 
         public async Task WatchHint()
