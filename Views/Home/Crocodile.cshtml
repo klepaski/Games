@@ -4,26 +4,21 @@
 @using task6x.Services;
 @{
     ViewData["Title"] = "Crocodile";
-    string currentUser = ViewBag.CurrentUser;
+    string role = ViewBag.Role;
 }
 <div class="row preGame">
     <div class="welcomeGame">
         <h3 id="welcomeWords">Welcome to the 'Crocodile' game!</h3>
         <hr/>
-        <h6><b>Rules are pretty simple:</b></h6>
-        <h6>  ♥ Crocodile choose 1+ categories to draw</h6>
-        <h6>  ♥ Crocodile choose the word to draw</h6>
-        <h6>  ♥ Crocodile is drawing</h6>
-        <h6>  ♥ Other players send their guesses to the chat</h6>
-        <h6>  ♥ Crocodile can send a hint in chat</h6>
-        <h6>  ♥ Crocodile can't write answer! (it will be censored)</h6>
-        <h6>  ♥ The game continues untill a player send the correct answer to the chat</h6>
+        <h5><b>Rules are pretty simple:</b></h5>
+        <h5>  ♥ Crocodile chooses the word and tries to draw it</h5>
+        <h5>  ♥ Other players send their guesses to the chat</h5>
         <hr/>
         <img id="welcomePic" src="~/img/crocodile/welcome.PNG" />
 
     </div>
     <div class="preGameChoose">
-        @if (currentUser == "admin")
+        @if (role == "crocodile")
         {
             <div id="categorySection">
                 <h3 id="welcomeWords">Please, choose the categories </h3>
@@ -45,7 +40,7 @@
         }
         else
         {
-            <h3 id="welcomeWords">Please, wait while admin choose word to draw.</h3>
+            <h3 id="welcomeWords">Please, wait while crocodile choose word to draw.</h3>
             <h5>That will be fun!</h5>
         }
     </div>
@@ -57,7 +52,7 @@
 <div class="row game" style="display: none;">
     <div class="col-md-7">
         <canvas id='drawingpad' width='400' height='300'></canvas>
-        @if (currentUser == "admin")
+        @if (role == "crocodile")
         {
             <ul id="colors">
                 <li style="background-color: black;">black</li>
@@ -100,8 +95,7 @@
 
     connection.start().then(function () {
         console.log("Connected!");
-        if ("@currentUser" == "admin")
-        {
+        if ("@role" == "crocodile") {
             canvas.addEventListener("mousedown", mousedown, false);
             canvas.addEventListener("mousemove", mousemove, false);
             canvas.addEventListener("mouseup", mouseup, false);
@@ -170,12 +164,12 @@
 
     $("#sendMessageButton").click(function () {
         var message = $("#message").val();
-        connection.invoke("SendMessage", message, "@currentUser");
+        connection.invoke("SendMessage", message, "@role");
         $("#message").val("").focus();
     });
 
     connection.on("ReceiveMessage", function (isAnswer, message, userName) {
-        if (userName == "admin") {
+        if (userName == "crocodile") {
             message = isAnswer ? "******" : message;
             var encodedMsg = "<div class='msg'><img src='/img/crocodile/crocodile.png'><p>" + message + "</p></div>"; // (isAnswer ? "******" : message)
         }
@@ -185,7 +179,7 @@
         $("#messages").append(encodedMsg);
         $("#messages").animate({ scrollTop: $("#messages").height() }, 'fast');
 
-        if (isAnswer && userName != "admin") {
+        if (isAnswer && userName != "crocodile") {
             $("#messages").html("<h4>User <b>" + userName + "</b> guessed the word \"" + message.toUpperCase() + "\"!</h4>");
             $("#sendMessage").hide();
         }

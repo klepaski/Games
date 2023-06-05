@@ -2,29 +2,28 @@
 @using Microsoft.AspNetCore.Mvc.Rendering;
 @{
     ViewBag.Title = "Hangman";
-    string currentUser = ViewBag.CurrentUser;
+    string role = ViewBag.Role;
 }
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/5.0.13/signalr.min.js"></script>
 
+
+
 <div class="row preGame">
     <div class="welcomeGame">
         <h3 id="welcomeWords">Welcome to the 'Hangman' game!</h3>
         <hr />
-        <h6><b>Rules are pretty simple:</b></h6>
-        <h6>  ♥ Admin chooses any word</h6>
-        <h6>  ♥ Admin enters a hint</h6>
-        <h6>  ♥ Player try to guess the word's letters</h6>
-        <h6>  ♥ Player can take a hint</h6>
-        <h6>  ♥ Player wins after guessing all the letters</h6>
-        <h6>  ♥ Player loses after entering the wrong letter 6 times</h6>
+        <h5><b>Rules are pretty simple:</b></h5>
+        <h5>  ♥ Guess one letter in a time to reveal the secret word.</h5>
+        <h5>  ♥ Each incorrect guess adds another part to hangman. You only get 7 incorrect guesses.</h5>
+        <h5>  ♥ You can watch the hint.</h5>
         <hr />
         <img id="welcomePic" src="~/img/hangman/0.PNG" />
 
     </div>
     <div class="preGameChoose">
-        @if (@currentUser == "admin")
+        @if (@role == "host")
         {
             <h3 id="welcomeWords">Enter the word and hint:</h3>
             <input required id="word" class="form-w" placeholder="word" />
@@ -33,7 +32,7 @@
         }
         else
         {
-            <h3 id="welcomeWords">Please, wait while admin enters the word.</h3>
+            <h3 id="welcomeWords">Please, wait while host enters the word.</h3>
             <h5>That will be fun!</h5>
         }
     </div>
@@ -49,7 +48,7 @@
 
     <div class="col-md-8" id="gameProcess">
         <div id="guessLetter">
-            @if (@currentUser != "admin")
+            @if (@role != "host")
             {
                 <h5>Guess the letter:</h5>
                 <ul id="keyboard">
@@ -86,7 +85,7 @@
             else
             {
                 <h3 id="welcomeWords">Another player's tries:</h3>
-                <ul id="adminDisplay"></ul>            
+                <ul id="hostDisplay"></ul>            
             }
         </div>
         <h3 id="result"></h3>
@@ -115,13 +114,13 @@
     $('#keyboard li').click(function () {
         var letter = $(this).text();
         $(this).attr('id', 'pressed');
-        connection.invoke("SendLetter", letter, "@currentUser");
+        connection.invoke("SendLetter", letter, "@role");
     });
 
     connection.on("ReceiveLetter", function (isOver, isRight, displayWord, tries, letter, userName) {
         $("#displayWord").text(displayWord);
         $("#pressed").attr('id', isRight ? 'right' : 'wrong');
-        $("#adminDisplay").append("<li>" + userName + " chose letter " + letter + ". " + tries + " tries spent.</li>")
+        $("#hostDisplay").append("<li>" + userName + " chose letter " + letter + ". " + tries + " tries spent.</li>")
         if (isOver) {
             $("#guessLetter").hide();
             $("#result").text(isRight ? `${userName} won. Congratulations!` : `${userName} lost. Better luck next time!`);

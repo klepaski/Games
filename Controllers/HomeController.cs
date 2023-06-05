@@ -13,38 +13,42 @@ namespace task6x.Controllers
             _logger = logger;
         }
 
-        public IActionResult Index()
+        public IActionResult Login()
         {
             return View();
         }
 
+        public IActionResult Index()
+        {
+            var currentUser = HttpContext.Session.GetString("userName");
+            if (currentUser == null) return RedirectPermanent("~/Home/Login");
+            ViewBag.CurrentUser = currentUser;
+            return View();
+        }
+
         [HttpPost]
-        public IActionResult Login()
+        public IActionResult Authorise()
         {
             var userName = HttpContext.Request.Form["userName"];
             HttpContext.Session.SetString("userName", userName);
-            return RedirectPermanent("~/Home/Hangman");
+            return RedirectPermanent("~/Home/Index");
         }
 
         public IActionResult Logout()
         {
             HttpContext.Session.Remove("userName");
-            return RedirectPermanent("~/Home/Index");
+            return RedirectPermanent("~/Home/Login");
         }
 
-        public IActionResult Crocodile()
+        public IActionResult Crocodile(string role)
         {
-            var currentUser = HttpContext.Session.GetString("userName");
-            if (currentUser == null) return RedirectPermanent("~/Home/Index");
-            ViewBag.CurrentUser = currentUser;
+            ViewBag.Role = role;
             return View();
         }
 
-        public IActionResult Hangman()
+        public IActionResult Hangman(string role)
         {
-            var currentUser = HttpContext.Session.GetString("userName");
-            if (currentUser == null) return RedirectPermanent("~/Home/Index");
-            ViewBag.CurrentUser = currentUser;
+            ViewBag.Role = role;
             return View();
         }
 

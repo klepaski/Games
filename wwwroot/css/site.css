@@ -71,7 +71,19 @@ body {
     margin: 2px;
     height: 90px;
 }
+/*----------------------------*/
 
+#chooseGamePic {
+    width: 250px;
+}
+#chooseGamePic:hover {
+    width: 270px;
+    cursor: pointer;
+}
+.chooseGame {
+    text-align: center;
+    margin: 0;
+}
 /*----------------------------*/
 #watchHintButton {
     float: left;

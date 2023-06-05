@@ -1,20 +1,65 @@
 ﻿@{
-    ViewData["Title"] = "Login";
+    ViewData["Title"] = "Home";
+    string currentUser = ViewBag.CurrentUser;
 }
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/5.0.13/signalr.min.js"></script>
 
-<div class="row">
-    <div class="col-md-4 offset-md-4 text-center">
-        <section>
-            <form asp-controller="Home" asp-action="Login" method="post">
-                <h2>Enter your name!</h2>
-                <hr />
-                <div class="form-floating mb-3">
-                    <input required name="userName" type="text" placeholder="Your name" />
-                </div>
-                <div>
-                    <button class="btn btn-pink" type="submit">Login</button>
-                </div>
-            </form>
-        </section>
+<div class="row preGame">
+    <h3 id="welcomeWords">Choose the game and let's go!</h3>
+    <hr/>
+    <div class="col-md-6 chooseGame">
+        <a class="nav-link text-dark" id="crocodile">
+            <img id="chooseGamePic" src="~/img/crocodile/choose.PNG" />
+        </a><br />
+        <h5>Crocodile</h5>
+    </div>
+
+    <div class="col-md-6 chooseGame">
+        <a class="nav-link text-dark" id="hangman">
+            <img id="chooseGamePic" src="~/img/hangman/0.PNG" />
+        </a><br />
+        <h5>Hangman</h5>
     </div>
 </div>
+
+
+<div class="row chooseHangmanRole" style="display: none;">
+    <h3 id="welcomeWords">Choose your role!</h3>
+    <hr />
+    <ul>
+        <li class="nav-item">
+            <a class="btn btn-pink" asp-area="" asp-controller="Home" asp-action="Hangman" asp-route-role="host">HOST</a>
+        </li>
+        <li class="nav-item">
+            <a class="btn btn-pink" asp-area="" asp-controller="Home" asp-action="Hangman" asp-route-role="@currentUser">PLAYER</a>
+        </li>
+    </ul>
+</div>
+
+
+<div class="row chooseCrocodileRole" style="display: none;">
+    <h3 id="welcomeWords">Choose your role!</h3>
+    <hr />
+    <ul>
+        <li class="nav-item">
+            <a class="btn btn-pink" asp-area="" asp-controller="Home" asp-action="Crocodile" asp-route-role="crocodile">CROCODILE</a>
+        </li>
+        <li class="nav-item">
+            <a class="btn btn-pink" asp-area="" asp-controller="Home" asp-action="Crocodile" asp-route-role="@currentUser">PLAYER</a>
+        </li>
+    </ul>
+</div>
+
+
+<script>
+    $("#hangman").click(function () {
+        $(".preGame").hide();
+        $(".chooseHangmanRole").show();
+    });
+
+    $("#crocodile").click(function () {
+        $(".preGame").hide();
+        $(".chooseCrocodileRole").show();
+    });
+</script>
