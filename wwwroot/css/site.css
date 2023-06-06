@@ -84,6 +84,11 @@ body {
     text-align: center;
     margin: 0;
 }
+.chooseRole {
+    width: 200px;
+    margin: 10px;
+    font-size: 25px;
+}
 /*----------------------------*/
 #watchHintButton {
     float: left;
@@ -206,6 +211,9 @@ body {
 #sendWordButton {
     font-size: 20px;
     width: 100px;
+}
+#hangmanPic {
+    width: 250px;
 }
 /*---------------------------------*/
 canvas {
@@ -378,4 +386,9 @@ canvas {
 }
 .preGame {
     margin-right: -50px;
+}
+#categories {
+    text-align: left;
+    margin-left: 90px;
+    font-size: 20px;
 }

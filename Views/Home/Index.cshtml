@@ -10,14 +10,14 @@
     <hr/>
     <div class="col-md-6 chooseGame">
         <a class="nav-link text-dark" id="crocodile">
-            <img id="chooseGamePic" src="~/img/crocodile/choose.PNG" />
+            <img id="chooseGamePic" src="~/img/crocodile/choose.png" />
         </a><br />
         <h5>Crocodile</h5>
     </div>
 
     <div class="col-md-6 chooseGame">
         <a class="nav-link text-dark" id="hangman">
-            <img id="chooseGamePic" src="~/img/hangman/0.PNG" />
+            <img id="chooseGamePic" src="~/img/hangman/choose.PNG" />
         </a><br />
         <h5>Hangman</h5>
     </div>
@@ -29,10 +29,10 @@
     <hr />
     <ul>
         <li class="nav-item">
-            <a class="btn btn-pink" asp-area="" asp-controller="Home" asp-action="Hangman" asp-route-role="host">HOST</a>
+            <a class="btn btn-pink chooseRole" asp-area="" asp-controller="Home" asp-action="Hangman" asp-route-role="host">HOST</a>
         </li>
         <li class="nav-item">
-            <a class="btn btn-pink" asp-area="" asp-controller="Home" asp-action="Hangman" asp-route-role="@currentUser">PLAYER</a>
+            <a class="btn btn-pink chooseRole" asp-area="" asp-controller="Home" asp-action="Hangman" asp-route-role="@currentUser">PLAYER</a>
         </li>
     </ul>
 </div>
@@ -43,10 +43,10 @@
     <hr />
     <ul>
         <li class="nav-item">
-            <a class="btn btn-pink" asp-area="" asp-controller="Home" asp-action="Crocodile" asp-route-role="crocodile">CROCODILE</a>
+            <a class="btn btn-pink chooseRole" asp-area="" asp-controller="Home" asp-action="Crocodile" asp-route-role="crocodile">CROCODILE</a>
         </li>
         <li class="nav-item">
-            <a class="btn btn-pink" asp-area="" asp-controller="Home" asp-action="Crocodile" asp-route-role="@currentUser">PLAYER</a>
+            <a class="btn btn-pink chooseRole" asp-area="" asp-controller="Home" asp-action="Crocodile" asp-route-role="@currentUser">PLAYER</a>
         </li>
     </ul>
 </div>

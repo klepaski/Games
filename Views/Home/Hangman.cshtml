@@ -8,18 +8,21 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/5.0.13/signalr.min.js"></script>
 
+<div class="preGroupCreate">
+    <h3 id="welcomeWords">Please, wait for another player.</h3>
+</div>
 
 
-<div class="row preGame">
+<div class="row preGame" style="display: none;">
     <div class="welcomeGame">
         <h3 id="welcomeWords">Welcome to the 'Hangman' game!</h3>
         <hr />
-        <h5><b>Rules are pretty simple:</b></h5>
-        <h5>  ♥ Guess one letter in a time to reveal the secret word.</h5>
-        <h5>  ♥ Each incorrect guess adds another part to hangman. You only get 7 incorrect guesses.</h5>
-        <h5>  ♥ You can watch the hint.</h5>
+        <h5><b>Rules:</b></h5>
+        <h5>  ♥ Host chooses the secret word</h5>
+        <h5>  ♥ Player tries to guess each word's letter</h5>
+        <h5>  ♥ 1 incorrect guess = +1 part to hangman</h5>
         <hr />
-        <img id="welcomePic" src="~/img/hangman/0.PNG" />
+        <img id="welcomePic" src="~/img/hangman/choose.PNG" />
 
     </div>
     <div class="preGameChoose">
@@ -33,7 +36,6 @@
         else
         {
             <h3 id="welcomeWords">Please, wait while host enters the word.</h3>
-            <h5>That will be fun!</h5>
         }
     </div>
 </div>
@@ -94,17 +96,42 @@
 
 
 <script>
-    var connection = new signalR.HubConnectionBuilder().withUrl("/Hangman").build();
+    var connection = new signalR.HubConnectionBuilder().withUrl("/Hangman?role=@role").build();
+
+    var _word = "";
+    var _hint = "";
+    var _displayWord = "";
+    var _tries = 0;
+    var _group = "";
+
+    connection.on("ReceiveGroup", function (group, isGroupComplete) {
+        _group = group;
+        if (isGroupComplete) {
+            $(".preGroupCreate").hide();
+            $(".preGame").show();
+        }
+    });
+
+    connection.on("CloseGroup", function () {
+        $(".preGame").hide();
+        $(".game").hide();
+        $(".preGroupCreate").show().html("<h3 id='welcomeWords'> Sorry, another player left the game.</h3>");
+    });
 
     $("#sendWordButton").click(function () {
         var word = $("#word").val();
         var hint = $("#hint").val();
-        connection.invoke("SendWord", word, hint);
+        connection.invoke("SendWord", word, hint, _group);
         $("#word").val("");
         $("#hint").val("");
     });
 
-    connection.on("ReceiveWord", function (displayWord) {
+    connection.on("ReceiveWord", function (displayWord, word, hint) {
+        _tries = 0;
+        _displayWord = displayWord;
+        _word = word;
+        _hint = hint;
+
         $(".preGame").hide();
         $(".game").show();
         $("#displayWord").text(displayWord);
@@ -114,10 +141,12 @@
     $('#keyboard li').click(function () {
         var letter = $(this).text();
         $(this).attr('id', 'pressed');
-        connection.invoke("SendLetter", letter, "@role");
+        connection.invoke("SendLetter", letter, "@role", _word, _displayWord, _tries, _group);
     });
 
     connection.on("ReceiveLetter", function (isOver, isRight, displayWord, tries, letter, userName) {
+        _tries = tries;
+        _displayWord = displayWord;
         $("#displayWord").text(displayWord);
         $("#pressed").attr('id', isRight ? 'right' : 'wrong');
         $("#hostDisplay").append("<li>" + userName + " chose letter " + letter + ". " + tries + " tries spent.</li>")
@@ -131,14 +160,8 @@
     });
 
     $("#watchHintButton").click(function () {
-        connection.invoke("WatchHint");
+        $("#hintDisplay").show().text(_hint);
     });
-
-    connection.on("ReceiveHint", function (hint) {
-        $("#hintDisplay").show().text(hint);
-    });
-
-    //-------------------------------------------
 
     connection.start().then(function () {
         console.log("Connected!");

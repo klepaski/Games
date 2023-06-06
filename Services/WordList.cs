@@ -47,23 +47,8 @@ namespace task6x.Services
             "paparazzi", "intellectual", "sultan", "king", "kamikaze", "tourist"
         };
 
-        //public static void Shuffle(List<string> list)
-        //{
-        //    var rnd = new Random();
-        //    int n = list.Count;
-        //    while (n > 1)
-        //    {
-        //        n--;
-        //        int k = rnd.Next(n + 1);
-        //        string value = list[k];
-        //        list[k] = list[n];
-        //        list[n] = value;
-        //    }
-        //}
-
         public static List<string> GenerateWords(List<Category> categories)
         {
-            //var result = new Stack<string>();
             var allWords = new List<string>();
 
             foreach (var c in categories)
@@ -78,13 +63,6 @@ namespace task6x.Services
                 });
             }
             var shuffled = allWords.Distinct().OrderBy(x => System.Guid.NewGuid().ToString()).ToList();
-
-            //Shuffle(allWords);
-            //Shuffle(allWords);
-
-            //foreach (string word in allWords)
-            //    result.Push(word);
-            //return result;
             return shuffled;
         }
     }

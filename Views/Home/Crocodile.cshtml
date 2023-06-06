@@ -6,11 +6,17 @@
     ViewData["Title"] = "Crocodile";
     string role = ViewBag.Role;
 }
-<div class="row preGame">
+
+<div class="preGroupCreate">
+    <h3 id="welcomeWords">Please, wait for another player.</h3>
+</div>
+
+
+<div class="row preGame" style="display: none;">
     <div class="welcomeGame">
         <h3 id="welcomeWords">Welcome to the 'Crocodile' game!</h3>
         <hr/>
-        <h5><b>Rules are pretty simple:</b></h5>
+        <h5><b>Rules:</b></h5>
         <h5>  ♥ Crocodile chooses the word and tries to draw it</h5>
         <h5>  ♥ Other players send their guesses to the chat</h5>
         <hr/>
@@ -25,7 +31,7 @@
                 <p id="categories">
                     @foreach (var c in (Category[])Enum.GetValues(typeof(Category)))
                     {
-                        <input type="checkbox" value="@c" /> @c
+                        <input type="checkbox" value="@c" /> @c<br/>
                     }
                 </p>
                 <button class="btn btn-pink col-md-3" id="sendCategoriesButton">Choose categories</button>
@@ -41,7 +47,6 @@
         else
         {
             <h3 id="welcomeWords">Please, wait while crocodile choose word to draw.</h3>
-            <h5>That will be fun!</h5>
         }
     </div>
     
@@ -89,9 +94,23 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/5.0.13/signalr.min.js"></script>
 
-
 <script>
-    var connection = new signalR.HubConnectionBuilder().withUrl("/Crocodile").build();
+    var connection = new signalR.HubConnectionBuilder().withUrl("/Crocodile?role=@role").build();
+    var _group = "";
+
+    connection.on("ReceiveGroup", function (group, isGroupComplete) {
+        _group = group;
+        if (isGroupComplete) {
+            $(".preGroupCreate").hide();
+            $(".preGame").show();
+        }
+    });
+
+    connection.on("CloseGroup", function () {
+        $(".preGame").hide();
+        $(".game").hide();
+        $(".preGroupCreate").show().html("<h3 id='welcomeWords'> Sorry, another player left the game.</h3>");
+    });
 
     connection.start().then(function () {
         console.log("Connected!");
@@ -112,12 +131,10 @@
 
     $('#colors li').click(function () {
         _currentColor = $(this).text();
-        console.log(_currentColor)
-        connection.invoke("SendColor", _currentColor);
     });
 
     connection.on("addLine", function (data, color) {
-        drawLine(ctx, data.startX, data.startY, data.endX, data.endY, 1, color);
+        drawLine(ctx, data.startX, data.startY, data.endX, data.endY, 1, color, _group);
     })
 
     function drawLine(ctx, x1, y1, x2, y2, thickness, color) {
@@ -149,7 +166,7 @@
                 data.startY = drawGame.startY;
                 data.endX = mouseX;
                 data.endY = mouseY;
-                connection.invoke("DrawLine", data); //
+                connection.invoke("DrawLine", data, _currentColor, _group); //
                 drawGame.startX = mouseX;
                 drawGame.startY = mouseY;
             }
@@ -164,14 +181,14 @@
 
     $("#sendMessageButton").click(function () {
         var message = $("#message").val();
-        connection.invoke("SendMessage", message, "@role");
+        if (message != '') connection.invoke("SendMessage", message, "@role", _answer, _group);
         $("#message").val("").focus();
     });
 
     connection.on("ReceiveMessage", function (isAnswer, message, userName) {
         if (userName == "crocodile") {
             message = isAnswer ? "******" : message;
-            var encodedMsg = "<div class='msg'><img src='/img/crocodile/crocodile.png'><p>" + message + "</p></div>"; // (isAnswer ? "******" : message)
+            var encodedMsg = "<div class='msg'><img src='/img/crocodile/crocodile.png'><p>" + message + "</p></div>";
         }
         else {
             var encodedMsg = "<div class='msg darker'><p class='right'><b>" + userName + ":</b> " + message + "</p></div>";
@@ -183,36 +200,55 @@
             $("#messages").html("<h4>User <b>" + userName + "</b> guessed the word \"" + message.toUpperCase() + "\"!</h4>");
             $("#sendMessage").hide();
         }
-    })
+    });
 
-    // Chose category and word
+    $('#message').keypress(function (event) {
+        if (event.which == 13) {
+            $("#sendMessageButton").click();
+            return false;
+        }
+    });
+
+    // Send categories and answer 
+
+    var _words = [];
+    var _answer = "";
+    var i = 0;
 
     $("#sendCategoriesButton").click(function () {
         var checked = [];
         $('#categories input:checkbox:checked').each(function () {
-            console.log($(this).val());
             checked.push($(this).val());
         });
-        connection.invoke("SendCategories", checked);
-        $('#categorySection').hide();
+        if (checked.length > 0) {
+            connection.invoke("SendCategories", checked);
+            $('#categorySection').hide();
+        }
+        else alert("Please, choose at least one category");
     });
 
-    connection.on("chooseAnswer", function (answer) {
+    connection.on("chooseAnswer", function (words) {
+        _words = words;
+        _answer = _words[0];
         $('#proposeAnswerSection').show();
-        $('#proposedAnswer').text(answer);
+        $('#proposedAnswer').text(_answer);
     });
 
     $("#changeAnswerButton").click(function () {
-        connection.invoke("ChangeAnswer");
+        i = (i < _words.length) ? i+1 : 0;
+        _answer = _words[i];
+        $('#proposedAnswer').text(_answer);
     });
 
     $("#setAnswerButton").click(function () {
-        connection.invoke("SetAnswer");
+        connection.invoke("SetAnswer", _answer, _group);
     });
 
     connection.on("setAnswer", function (answer) {
+        _answer = answer;
         $('.preGame').hide();
         $('.game').show();
         $('#answer').text(answer);
     });
 </script>
+
