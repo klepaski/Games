@@ -11,7 +11,6 @@ namespace task6x.Hubs
     {
         private static Dictionary<string, List<string>> dict = new();
         private static int groupHostCount = 0;
-        private static int groupPlayerCount = 0;
 
         public async Task SendWord(string word, string hint, string group)
         {
@@ -41,28 +40,48 @@ namespace task6x.Hubs
 
         public override async Task OnConnectedAsync()
         {
+            string username = this.Context.GetHttpContext().Request.Query["username"];
             string role = this.Context.GetHttpContext().Request.Query["role"];
-            string group = (role == "host") ? (groupHostCount++).ToString() : (groupPlayerCount++).ToString();
             bool isGroupComplete = false;
-            if (!dict.ContainsKey(group))
+            if (role == "host")
             {
-                dict.Add(group, new List<string> { Context.ConnectionId });
+                string group = (groupHostCount++).ToString();
+                dict.Add(group, new List<string> { username });
+                await Groups.AddToGroupAsync(Context.ConnectionId, group);
+                await Clients.Caller.SendAsync("ReceiveGroup", group, isGroupComplete);
             }
-            else
-            {
-                dict[group].Add(Context.ConnectionId);
-                isGroupComplete = true;
-            }
-            await Groups.AddToGroupAsync(Context.ConnectionId, group);
-            await Clients.Group(group).SendAsync("ReceiveGroup", group, isGroupComplete);
             await base.OnConnectedAsync();
+        }
+
+        public async Task ChooseHost(string hostName, string userName)
+        {
+            foreach (var d in dict)
+            {
+                if (d.Value.Contains(hostName))
+                {
+                    if (d.Value.Count == 1)
+                    {
+                        await Groups.AddToGroupAsync(Context.ConnectionId, d.Key);
+                        bool isGroupComplete = true;
+                        await Clients.Group(d.Key).SendAsync("ReceiveGroup", d.Key, isGroupComplete);
+                        dict[d.Key].Add(userName);
+                        return;
+                    }
+                    else
+                    {
+                        await Clients.Caller.SendAsync("WrongHost", "This user is already playing.");
+                        return;
+                    }
+                }
+            }
+            await Clients.Caller.SendAsync("WrongHost", "This user is absent.");
         }
 
         public override async Task OnDisconnectedAsync(Exception exception)
         {
             foreach (var d in dict)
             {
-                if (d.Value.Contains(Context.ConnectionId))
+                if (d.Value.Contains(this.Context.GetHttpContext().Request.Query["username"]))
                 {
                     await Clients.Group(d.Key).SendAsync("CloseGroup");
                     //foreach (var conn in d.Value)

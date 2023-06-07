@@ -5,10 +5,21 @@
 @{
     ViewData["Title"] = "Crocodile";
     string role = ViewBag.Role;
+    string username = ViewBag.UserName;
 }
 
 <div class="preGroupCreate">
-    <h3 id="welcomeWords">Please, wait for another player.</h3>
+    @if (role == "crocodile")
+    {
+        <h3 id="welcomeWords">You created game session. Wait for another player to join.</h3>
+    }
+    else
+    {
+        <h3 id="welcomeWords">What user would you like to join?</h3>
+        <input required id="chooseCrocodile" class="form-w" placeholder="username" /><br />
+        <button class="btn btn-pink" id="chooseCrocodileButton">Join</button><br/>
+        <h3 id="wrongCrocodile"></h3>
+    }
 </div>
 
 
@@ -95,7 +106,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/5.0.13/signalr.min.js"></script>
 
 <script>
-    var connection = new signalR.HubConnectionBuilder().withUrl("/Crocodile?role=@role").build();
+    var connection = new signalR.HubConnectionBuilder().withUrl("/Crocodile?role=@role&username=@username").build();
     var _group = "";
 
     connection.on("ReceiveGroup", function (group, isGroupComplete) {
@@ -106,10 +117,19 @@
         }
     });
 
+    connection.on("WrongCrocodile", function (message) {
+        $("#wrongCrocodile").text(message);
+    });
+
     connection.on("CloseGroup", function () {
         $(".preGame").hide();
         $(".game").hide();
         $(".preGroupCreate").show().html("<h3 id='welcomeWords'> Sorry, another player left the game.</h3>");
+    });
+
+    $("#chooseCrocodileButton").click(function () {
+        var crocodileName = $("#chooseCrocodile").val();
+        connection.invoke("ChooseCrocodile", crocodileName, "@username");
     });
 
     connection.start().then(function () {
@@ -181,23 +201,23 @@
 
     $("#sendMessageButton").click(function () {
         var message = $("#message").val();
-        if (message != '') connection.invoke("SendMessage", message, "@role", _answer, _group);
+        if (message != '') connection.invoke("SendMessage", message, "@role", "@username", _answer, _group);
         $("#message").val("").focus();
     });
 
-    connection.on("ReceiveMessage", function (isAnswer, message, userName) {
-        if (userName == "crocodile") {
+    connection.on("ReceiveMessage", function (isAnswer, message, role, username) {
+        if (role == "crocodile") {
             message = isAnswer ? "******" : message;
             var encodedMsg = "<div class='msg'><img src='/img/crocodile/crocodile.png'><p>" + message + "</p></div>";
         }
         else {
-            var encodedMsg = "<div class='msg darker'><p class='right'><b>" + userName + ":</b> " + message + "</p></div>";
+            var encodedMsg = "<div class='msg darker'><p class='right'><b>" + username + ":</b> " + message + "</p></div>";
         }
         $("#messages").append(encodedMsg);
         $("#messages").animate({ scrollTop: $("#messages").height() }, 'fast');
 
-        if (isAnswer && userName != "crocodile") {
-            $("#messages").html("<h4>User <b>" + userName + "</b> guessed the word \"" + message.toUpperCase() + "\"!</h4>");
+        if (isAnswer && role != "crocodile") {
+            $("#messages").html("<h4>User <b>" + username + "</b> guessed the word \"" + message.toUpperCase() + "\"!</h4>");
             $("#sendMessage").hide();
         }
     });

@@ -40,14 +40,16 @@ namespace task6x.Controllers
             return RedirectPermanent("~/Home/Login");
         }
 
-        public IActionResult Crocodile(string role)
+        public IActionResult Crocodile(string role, string username)
         {
+            ViewBag.UserName = username;
             ViewBag.Role = role;
             return View();
         }
 
-        public IActionResult Hangman(string role)
+        public IActionResult Hangman(string role, string username)
         {
+            ViewBag.UserName = username;
             ViewBag.Role = role;
             return View();
         }

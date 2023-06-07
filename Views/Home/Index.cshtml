@@ -29,10 +29,10 @@
     <hr />
     <ul>
         <li class="nav-item">
-            <a class="btn btn-pink chooseRole" asp-area="" asp-controller="Home" asp-action="Hangman" asp-route-role="host">HOST</a>
+            <a class="btn btn-pink chooseRole" asp-area="" asp-controller="Home" asp-action="Hangman" asp-route-role="host" asp-route-username="@currentUser">HOST</a>
         </li>
         <li class="nav-item">
-            <a class="btn btn-pink chooseRole" asp-area="" asp-controller="Home" asp-action="Hangman" asp-route-role="@currentUser">PLAYER</a>
+            <a class="btn btn-pink chooseRole" asp-area="" asp-controller="Home" asp-action="Hangman" asp-route-role="player" asp-route-username="@currentUser">PLAYER</a>
         </li>
     </ul>
 </div>
@@ -43,10 +43,10 @@
     <hr />
     <ul>
         <li class="nav-item">
-            <a class="btn btn-pink chooseRole" asp-area="" asp-controller="Home" asp-action="Crocodile" asp-route-role="crocodile">CROCODILE</a>
+            <a class="btn btn-pink chooseRole" asp-area="" asp-controller="Home" asp-action="Crocodile" asp-route-role="crocodile" asp-route-username="@currentUser">CROCODILE</a>
         </li>
         <li class="nav-item">
-            <a class="btn btn-pink chooseRole" asp-area="" asp-controller="Home" asp-action="Crocodile" asp-route-role="@currentUser">PLAYER</a>
+            <a class="btn btn-pink chooseRole" asp-area="" asp-controller="Home" asp-action="Crocodile" asp-route-role="player" asp-route-username="@currentUser">PLAYER</a>
         </li>
     </ul>
 </div>

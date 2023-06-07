@@ -14,7 +14,6 @@ namespace task6x.Hubs
     {
         private static Dictionary<string, List<string>> dict = new();
         private static int groupCrocodileCount = 0;
-        private static int groupPlayerCount = 0;
 
         public async Task SendCategories(string[] categories)
         {
@@ -33,37 +32,57 @@ namespace task6x.Hubs
             await Clients.OthersInGroup(group).SendAsync("addLine", data, color);
         }
 
-        public async Task SendMessage(string message, string userName, string answer, string group)
+        public async Task SendMessage(string message, string role, string username, string answer, string group)
         {
             bool isAnswer = false;
             if (message.ToLower() == answer) isAnswer = true;
-            await Clients.Group(group).SendAsync("ReceiveMessage", isAnswer, message, userName);
+            await Clients.Group(group).SendAsync("ReceiveMessage", isAnswer, message, role, username);
         }
 
         public override async Task OnConnectedAsync()
         {
+            string username = this.Context.GetHttpContext().Request.Query["username"];
             string role = this.Context.GetHttpContext().Request.Query["role"];
-            string group = (role == "crocodile") ? (groupCrocodileCount++).ToString() : (groupPlayerCount++).ToString();
             bool isGroupComplete = false;
-            if (!dict.ContainsKey(group))
+            if (role == "crocodile")
             {
-                dict.Add(group, new List<string> { Context.ConnectionId });
+                string group = (groupCrocodileCount++).ToString();
+                dict.Add(group, new List<string> { username });
+                await Groups.AddToGroupAsync(Context.ConnectionId, group);
+                await Clients.Caller.SendAsync("ReceiveGroup", group, isGroupComplete);
             }
-            else
-            {
-                dict[group].Add(Context.ConnectionId);
-                isGroupComplete = true;
-            }
-            await Groups.AddToGroupAsync(Context.ConnectionId, group);
-            await Clients.Group(group).SendAsync("ReceiveGroup", group, isGroupComplete);
             await base.OnConnectedAsync();
+        }
+
+        public async Task ChooseCrocodile(string crocodileName, string userName)
+        {
+            foreach (var d in dict)
+            {
+                if (d.Value.Contains(crocodileName))
+                {
+                    if (d.Value.Count == 1)
+                    {
+                        await Groups.AddToGroupAsync(Context.ConnectionId, d.Key);
+                        bool isGroupComplete = true;
+                        await Clients.Group(d.Key).SendAsync("ReceiveGroup", d.Key, isGroupComplete);
+                        dict[d.Key].Add(userName);
+                        return;
+                    }
+                    else
+                    {
+                        await Clients.Caller.SendAsync("WrongCrocodile", "This user is already playing.");
+                        return;
+                    }
+                }
+            }
+            await Clients.Caller.SendAsync("WrongCrocodile", "This user is absent.");
         }
 
         public override async Task OnDisconnectedAsync(Exception exception)
         {
             foreach (var d in dict)
             {
-                if (d.Value.Contains(Context.ConnectionId))
+                if (d.Value.Contains(this.Context.GetHttpContext().Request.Query["username"]))
                 {
                     await Clients.Group(d.Key).SendAsync("CloseGroup");
                     dict.Remove(d.Key);
