@@ -23,7 +23,7 @@
         <h5>  ♥ Crocodile chooses the word and tries to draw it</h5>
         <h5>  ♥ Other players send their guesses to the chat</h5>
         <hr/>
-        <img id="welcomePic" src="~/img/crocodile/welcome.PNG" />
+        <img id="welcomePic" src="~/img/Crocodile/welcome.PNG" />
     </div>
 
     <div class="preGameChoose">
@@ -196,7 +196,7 @@
     connection.on("ReceiveMessage", function (isAnswer, message, role, username) {
         if (role == "crocodile") {
             message = isAnswer ? "******" : message;
-            var encodedMsg = "<div class='msg'><img src='/img/crocodile/crocodile.png'><p>" + message + "</p></div>";
+            var encodedMsg = "<div class='msg'><img src='/img/Crocodile/crocodile.PNG'><p>" + message + "</p></div>";
         }
         else {
             var encodedMsg = "<div class='msg darker'><p class='right'><b>" + username + ":</b> " + message + "</p></div>";

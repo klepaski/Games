@@ -24,13 +24,13 @@
     <hr/>
     <div class="col-md-6 chooseGame">
         <a class="nav-link text-dark createSession" id="Crocodile" asp-area="" asp-controller="Home" asp-action="Crocodile" asp-route-role="crocodile" asp-route-username="@currentUser">
-            <img id="chooseGamePic" src="~/img/crocodile/choose.png" />
+            <img id="chooseGamePic" src="~/img/Crocodile/choose.PNG" />
         </a><br />
         <h5>Crocodile</h5>
     </div>
     <div class="col-md-6 chooseGame">
         <a class="nav-link text-dark createSession" id="Hangman" asp-area="" asp-controller="Home" asp-action="Hangman" asp-route-role="host" asp-route-username="@currentUser">
-            <img id="chooseGamePic" src="~/img/hangman/choose.PNG" />
+            <img id="chooseGamePic" src="~/img/Hangman/choose.PNG" />
         </a><br />
         <h5>Hangman</h5>
     </div>
@@ -75,7 +75,7 @@
     connection.on("NewGameSession", function (game, username) {
         var newSession = `<div class="col-md-4 chooseGame" id="${username}" >
                 <a id="${game}" class="nav-link text-dark">
-                   <img id="chooseGameSessionPic" src="/img/${game}/choose.png" />
+                   <img id="chooseGameSessionPic" src="/img/${game}/choose.PNG" />
                 </a><br />
                 <h5>${username}</h5>
             </div>`

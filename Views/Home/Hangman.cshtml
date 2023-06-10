@@ -25,7 +25,7 @@
         <h5>  ♥ Player tries to guess each word's letter</h5>
         <h5>  ♥ 1 incorrect guess = +1 part to hangman</h5>
         <hr />
-        <img id="welcomePic" src="~/img/hangman/choose.PNG" />
+        <img id="welcomePic" src="~/img/Hangman/choose.PNG" />
 
     </div>
     <div class="preGameChoose">
@@ -50,7 +50,7 @@
     <div class="col-md-4">
         <div id="displayWord"></div>
 
-        <div id="hangman"><img id="hangmanPic" src="~/img/hangman/0.PNG" /></div>
+        <div id="hangman"><img id="hangmanPic" src="~/img/Hangman/0.PNG" /></div>
     </div>
 
     <div class="col-md-8" id="gameProcess">
@@ -166,7 +166,7 @@
             $("#result").text(isRight ? `${userName} won. Congratulations!` : `${userName} lost. Better luck next time!`);
         }
         if (!isRight) {
-            $('#hangmanPic').attr('src', `/img/hangman/${tries}.PNG`);
+            $('#hangmanPic').attr('src', `/img/Hangman/${tries}.PNG`);
         }
     });
 
