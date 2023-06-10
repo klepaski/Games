@@ -13,15 +13,7 @@
     {
         <h3 id="welcomeWords">You created game session. Wait for another player to join.</h3>
     }
-    else
-    {
-        <h3 id="welcomeWords">What user would you like to join?</h3>
-        <input required id="chooseCrocodile" class="form-w" placeholder="username" /><br />
-        <button class="btn btn-pink" id="chooseCrocodileButton">Join</button><br/>
-        <h3 id="wrongCrocodile"></h3>
-    }
 </div>
-
 
 <div class="row preGame" style="display: none;">
     <div class="welcomeGame">
@@ -32,8 +24,8 @@
         <h5>  ♥ Other players send their guesses to the chat</h5>
         <hr/>
         <img id="welcomePic" src="~/img/crocodile/welcome.PNG" />
-
     </div>
+
     <div class="preGameChoose">
         @if (role == "crocodile")
         {
@@ -106,39 +98,35 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/5.0.13/signalr.min.js"></script>
 
 <script>
-    var connection = new signalR.HubConnectionBuilder().withUrl("/Crocodile?role=@role&username=@username").build();
+    var connection = new signalR.HubConnectionBuilder().withUrl("/Crocodile").build();
+    var connection2 = new signalR.HubConnectionBuilder().withUrl("/GameSession?username=@username").build();
     var _group = "";
 
-    connection.on("ReceiveGroup", function (group, isGroupComplete) {
+    connection2.on("ReceiveGroup", function (group, isGroupComplete) {
         _group = group;
+        console.log(group);
+        console.log(isGroupComplete);
         if (isGroupComplete) {
             $(".preGroupCreate").hide();
             $(".preGame").show();
         }
     });
 
-    connection.on("WrongCrocodile", function (message) {
-        $("#wrongCrocodile").text(message);
-    });
-
-    connection.on("CloseGroup", function () {
+    connection2.on("CloseGroup", function () {
+        $(".preGroupCreate").hide();
         $(".preGame").hide();
-        $(".game").hide();
-        $(".preGroupCreate").show().html("<h3 id='welcomeWords'> Sorry, another player left the game.</h3>");
+        $(".game").show().html("<h3 id='welcomeWords'> Sorry, another player left the game.</h3>");
     });
 
-    $("#chooseCrocodileButton").click(function () {
-        var crocodileName = $("#chooseCrocodile").val();
-        connection.invoke("ChooseCrocodile", crocodileName, "@username");
-    });
-
-    connection.start().then(function () {
-        console.log("Connected!");
-        if ("@role" == "crocodile") {
-            canvas.addEventListener("mousedown", mousedown, false);
-            canvas.addEventListener("mousemove", mousemove, false);
-            canvas.addEventListener("mouseup", mouseup, false);
-        }
+    connection2.start().then(function () {
+        connection.start().then(function () {
+            if ("@role" == "crocodile") {
+                canvas.addEventListener("mousedown", mousedown, false);
+                canvas.addEventListener("mousemove", mousemove, false);
+                canvas.addEventListener("mouseup", mouseup, false);
+            }
+            connection.invoke("SetGroup", _group);
+        }).catch(function (err) { console.error(err.toString()); });
     }).catch(function (err) {console.error(err.toString());});
 
     // Drawing
@@ -260,11 +248,13 @@
         $('#proposedAnswer').text(_answer);
     });
 
-    $("#setAnswerButton").click(function () {
+    $("#setAnswerButton").on('click', function () {
+        console.log("set answer button");
         connection.invoke("SetAnswer", _answer, _group);
     });
 
     connection.on("setAnswer", function (answer) {
+        console.log('setAnswer');
         _answer = answer;
         $('.preGame').hide();
         $('.game').show();

@@ -80,6 +80,17 @@ body {
     width: 270px;
     cursor: pointer;
 }
+
+#chooseGameSessionPic {
+    width: 180px;
+    border: 2px solid gray;
+}
+
+    #chooseGameSessionPic:hover {
+        width: 200px;
+        cursor: pointer;
+    }
+
 .chooseGame {
     text-align: center;
     margin: 0;

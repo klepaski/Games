@@ -5,18 +5,31 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/5.0.13/signalr.min.js"></script>
 
-<div class="row preGame">
+<div class="row createOrJoin">
+    <h3 id="welcomeWords">Do you want to create new game session or join one?</h3>
+    <hr/>
+    <ul>
+        <li class="nav-item">
+            <a class="btn btn-pink chooseRole" id="createGame">Create game session</a>
+        </li>
+        <li class="nav-item">
+            <a class="btn btn-pink chooseRole" id="joinGame">Join game session</a>
+        </li>
+    </ul>
+</div>
+
+
+<div class="row chooseCreateGame" style="display: none;">
     <h3 id="welcomeWords">Choose the game and let's go!</h3>
     <hr/>
     <div class="col-md-6 chooseGame">
-        <a class="nav-link text-dark" id="crocodile">
+        <a class="nav-link text-dark createSession" id="Crocodile" asp-area="" asp-controller="Home" asp-action="Crocodile" asp-route-role="crocodile" asp-route-username="@currentUser">
             <img id="chooseGamePic" src="~/img/crocodile/choose.png" />
         </a><br />
         <h5>Crocodile</h5>
     </div>
-
     <div class="col-md-6 chooseGame">
-        <a class="nav-link text-dark" id="hangman">
+        <a class="nav-link text-dark createSession" id="Hangman" asp-area="" asp-controller="Home" asp-action="Hangman" asp-route-role="host" asp-route-username="@currentUser">
             <img id="chooseGamePic" src="~/img/hangman/choose.PNG" />
         </a><br />
         <h5>Hangman</h5>
@@ -24,42 +37,57 @@
 </div>
 
 
-<div class="row chooseHangmanRole" style="display: none;">
-    <h3 id="welcomeWords">Choose your role!</h3>
-    <hr />
-    <ul>
-        <li class="nav-item">
-            <a class="btn btn-pink chooseRole" asp-area="" asp-controller="Home" asp-action="Hangman" asp-route-role="host" asp-route-username="@currentUser">HOST</a>
-        </li>
-        <li class="nav-item">
-            <a class="btn btn-pink chooseRole" asp-area="" asp-controller="Home" asp-action="Hangman" asp-route-role="player" asp-route-username="@currentUser">PLAYER</a>
-        </li>
-    </ul>
-</div>
-
-
-<div class="row chooseCrocodileRole" style="display: none;">
-    <h3 id="welcomeWords">Choose your role!</h3>
-    <hr />
-    <ul>
-        <li class="nav-item">
-            <a class="btn btn-pink chooseRole" asp-area="" asp-controller="Home" asp-action="Crocodile" asp-route-role="crocodile" asp-route-username="@currentUser">CROCODILE</a>
-        </li>
-        <li class="nav-item">
-            <a class="btn btn-pink chooseRole" asp-area="" asp-controller="Home" asp-action="Crocodile" asp-route-role="player" asp-route-username="@currentUser">PLAYER</a>
-        </li>
-    </ul>
+<div class="row chooseJoinGame" style="display: none;">
+    <h3 id="welcomeWords">Choose the game session and join!</h3>
+    <div class="row" id="availableSessions">
+        
+    </div>
 </div>
 
 
 <script>
-    $("#hangman").click(function () {
-        $(".preGame").hide();
-        $(".chooseHangmanRole").show();
+    var connection = new signalR.HubConnectionBuilder().withUrl("/GameSession").build();
+    var _group = "";
+
+    $("#createGame").click(function () {
+        $(".createOrJoin").hide();
+        $(".chooseCreateGame").show();
     });
 
-    $("#crocodile").click(function () {
-        $(".preGame").hide();
-        $(".chooseCrocodileRole").show();
+    $("#joinGame").click(function () {
+        $(".createOrJoin").hide();
+        $(".chooseJoinGame").show();
     });
+
+    $(".createSession").click(function () {
+        var game = $(this).attr('id');
+        connection.invoke("CreateSession", game, "@currentUser");
+    });
+
+    $("#availableSessions").on('click', 'div', function () {
+        var userToJoin = $(this).attr('id');
+        var game = $(this).find("a").attr('id');
+        connection.invoke("JoinSession", userToJoin, "@currentUser");
+        var url = "/Home/" + game + "?role=player&username=@currentUser";
+        window.location.href = url;
+    });
+
+    connection.on("NewGameSession", function (game, username) {
+        var newSession = `<div class="col-md-4 chooseGame" id="${username}" >
+                <a id="${game}" class="nav-link text-dark">
+                   <img id="chooseGameSessionPic" src="/img/${game}/choose.png" />
+                </a><br />
+                <h5>${username}</h5>
+            </div>`
+        $("#availableSessions").append(newSession);
+    });
+
+    connection.on("DeleteGameSession", function (username) {
+        $("#availableSessions").find(`#${username}`).remove();
+    });
+
+    connection.start().then(function () {
+        console.log("Connected!");
+    }).catch(function (err) { console.error(err.toString()); });
+
 </script>

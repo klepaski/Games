@@ -32,6 +32,7 @@ app.MapControllerRoute(
 
 app.MapHub<HangmanHub>("/Hangman");
 app.MapHub<CrocodileHub>("/Crocodile");
+app.MapHub<GameSessionHub>("/GameSession");
 
 app.UseSession();
 

@@ -14,15 +14,7 @@
     {
         <h3 id="welcomeWords">You created game session. Wait for another player to join.</h3>
     }
-    else
-    {
-        <h3 id="welcomeWords">What user would you like to join?</h3>
-        <input required id="chooseHost" class="form-w" placeholder="username" /><br />
-        <button class="btn btn-pink" id="chooseHostButton">Join</button><br/>
-        <h3 id="wrongHost"></h3>
-    }
 </div>
-
 
 <div class="row preGame" style="display: none;">
     <div class="welcomeGame">
@@ -101,7 +93,8 @@
 
 
 <script>
-    var connection = new signalR.HubConnectionBuilder().withUrl("/Hangman?role=@role&username=@username").build();
+    var connection = new signalR.HubConnectionBuilder().withUrl("/Hangman").build();
+    var connection2 = new signalR.HubConnectionBuilder().withUrl("/GameSession?username=@username").build();
 
     var _word = "";
     var _hint = "";
@@ -109,7 +102,13 @@
     var _tries = 0;
     var _group = "";
 
-    connection.on("ReceiveGroup", function (group, isGroupComplete) {
+    connection2.start().then(function () {
+        connection.start().then(function () {
+            connection.invoke("SetGroup", _group);
+        }).catch(function (err) { console.error(err.toString()); });
+    }).catch(function (err) {console.error(err.toString());});
+    
+    connection2.on("ReceiveGroup", function (group, isGroupComplete) {
         _group = group;
         console.log(_group);
         console.log(isGroupComplete);
@@ -119,20 +118,13 @@
         }
     });
 
-    connection.on("WrongHost", function (message) {
-        $("#wrongHost").text(message);
-    });
-
-    connection.on("CloseGroup", function () {
+    connection2.on("CloseGroup", function () {
+        $(".preGroupCreate").hide();
         $(".preGame").hide();
-        $(".game").hide();
-        $(".preGroupCreate").show().html("<h3 id='welcomeWords'> Sorry, another player left the game.</h3>");
+        $(".game").show().html("<h3 id='welcomeWords'> Sorry, another player left the game.</h3>");
     });
 
-    $("#chooseHostButton").click(function () {
-        var hostName = $("#chooseHost").val();
-        connection.invoke("ChooseHost", hostName, "@username");
-    });
+    //------------------------------------------
 
     $("#sendWordButton").click(function () {
         var word = $("#word").val();
@@ -141,6 +133,7 @@
         $("#word").val("");
         $("#hint").val("");
     });
+
 
     connection.on("ReceiveWord", function (displayWord, word, hint) {
         _tries = 0;
@@ -159,15 +152,15 @@
 
     $('#keyboard li').click(function () {
         var letter = $(this).text();
-        $(this).attr('id', 'pressed');
-        connection.invoke("SendLetter", letter, "@role", _word, _displayWord, _tries, _group);
+        connection.invoke("SendLetter", letter, "@username", _word, _displayWord, _tries, _group);
     });
+
 
     connection.on("ReceiveLetter", function (isOver, isRight, displayWord, tries, letter, userName) {
         _tries = tries;
         _displayWord = displayWord;
         $("#displayWord").text(displayWord);
-        $("#pressed").attr('id', isRight ? 'right' : 'wrong');
+        $(`#${letter}`).attr('id', isRight ? 'right' : 'wrong');
         if (isOver) {
             $("#guessLetter").hide();
             $("#result").text(isRight ? `${userName} won. Congratulations!` : `${userName} lost. Better luck next time!`);
@@ -177,13 +170,9 @@
         }
     });
 
+
     $("#watchHintButton").click(function () {
         $("#hintDisplay").show().text(_hint);
     });
 
-    connection.start().then(function () {
-        console.log("Connected!");
-    }).catch(function (err) {
-        console.error(err.toString());
-    });
 </script>
